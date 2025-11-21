@@ -1,3 +1,4 @@
+# Branch Office Terraform Configuration
 terraform {
   required_version = ">= 1.0"
   required_providers {
@@ -20,7 +21,7 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  description = "EC2 instance type for VyOS"
+  description = "EC2 instance type for VyOS Branch"
   type        = string
   default     = "t3.micro"  # Free tier eligible
 }
@@ -28,13 +29,13 @@ variable "instance_type" {
 variable "key_name" {
   description = "AWS key pair name for SSH access"
   type        = string
-  default     = "vyos-key"
+  default     = "vyos-demo-key"
 }
 
-variable "branch_public_ip" {
-  description = "Public IP address of the branch office"
+variable "aggregator_public_ip" {
+  description = "Public IP address of the aggregator"
   type        = string
-  default     = "203.0.113.50"
+  default     = "18.141.25.25"  # Your aggregator IP
 }
 
 variable "environment" {
@@ -60,9 +61,9 @@ data "aws_subnets" "default" {
   }
 }
 
-data "aws_ami" "vyos" {
+data "aws_ami" "branch" {
   most_recent = true
-  owners      = ["amazon"] # Use Amazon Linux as base
+  owners      = ["amazon"]
   
   filter {
     name   = "name"
@@ -80,10 +81,10 @@ data "aws_ami" "vyos" {
   }
 }
 
-# Security Group for VyOS
-resource "aws_security_group" "vyos_sg" {
-  name        = "vyos-aggregator-sg-${var.environment}"
-  description = "Security group for VyOS Aggregator"
+# Security Group for Branch
+resource "aws_security_group" "branch_sg" {
+  name        = "vyos-branch-sg-${var.environment}"
+  description = "Security group for VyOS Branch Office"
   vpc_id      = data.aws_vpc.default.id
 
   # IPsec ESP
@@ -122,11 +123,11 @@ resource "aws_security_group" "vyos_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTPS Web GUI
+  # HTTP for status page
   ingress {
-    description = "HTTPS Web GUI"
-    from_port   = 443
-    to_port     = 443
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -150,80 +151,77 @@ resource "aws_security_group" "vyos_sg" {
   }
 
   tags = {
-    Name        = "vyos-aggregator-sg-${var.environment}"
+    Name        = "vyos-branch-sg-${var.environment}"
     Environment = var.environment
     Project     = "vyos-sdwan"
   }
 }
 
-# Generate user data script with VyOS configuration
+# User data for branch configuration
 locals {
   user_data = templatefile("${path.module}/user-data.sh", {
-    branch_public_ip = var.branch_public_ip
+    aggregator_public_ip = var.aggregator_public_ip
   })
 }
 
-# EC2 Instance for VyOS Aggregator - COST OPTIMIZED (Free Tier)
-resource "aws_instance" "vyos_aggregator" {
-  ami                         = data.aws_ami.vyos.id
+# EC2 Instance for VyOS Branch
+resource "aws_instance" "vyos_branch" {
+  ami                         = data.aws_ami.branch.id
   instance_type              = var.instance_type
   key_name                   = var.key_name
   subnet_id                  = data.aws_subnets.default.ids[0]
-  vpc_security_group_ids     = [aws_security_group.vyos_sg.id]
+  vpc_security_group_ids     = [aws_security_group.branch_sg.id]
   associate_public_ip_address = true
   
   user_data = local.user_data
 
   root_block_device {
-    volume_type           = "gp2"  # Free tier includes 30GB
-    volume_size           = 8     # Minimum size
+    volume_type           = "gp2"
+    volume_size           = 8
     delete_on_termination = true
-    encrypted             = false  # Save on encryption costs
+    encrypted             = false
   }
 
   tags = {
-    Name        = "vyos-aggregator-${var.environment}"
+    Name        = "vyos-branch-${var.environment}"
     Environment = var.environment
     Project     = "vyos-sdwan"
-    Role        = "aggregator"
+    Role        = "branch"
   }
 }
 
-# Using auto-assigned public IP instead of Elastic IP to save costs
-# Note: Public IP will change on restart, update branch config accordingly
-
 # Outputs
-output "vyos_public_ip" {
-  description = "Public IP address of VyOS aggregator (dynamic)"
-  value       = aws_instance.vyos_aggregator.public_ip
+output "branch_public_ip" {
+  description = "Public IP address of VyOS branch"
+  value       = aws_instance.vyos_branch.public_ip
 }
 
-output "vyos_private_ip" {
-  description = "Private IP address of VyOS aggregator"
-  value       = aws_instance.vyos_aggregator.private_ip
+output "branch_private_ip" {
+  description = "Private IP address of VyOS branch"
+  value       = aws_instance.vyos_branch.private_ip
 }
 
-output "vyos_instance_id" {
-  description = "Instance ID of VyOS aggregator"
-  value       = aws_instance.vyos_aggregator.id
+output "branch_instance_id" {
+  description = "Instance ID of VyOS branch"
+  value       = aws_instance.vyos_branch.id
 }
 
 output "ssh_command" {
-  description = "SSH command to connect to VyOS"
-  value       = "ssh -i ${var.key_name}.pem ec2-user@${aws_instance.vyos_aggregator.public_ip}"
+  description = "SSH command to connect to branch"
+  value       = "ssh -i ${var.key_name}.pem ec2-user@${aws_instance.vyos_branch.public_ip}"
 }
 
-output "web_gui_url" {
-  description = "Web GUI URL for VyOS management (via Docker)"
-  value       = "https://${aws_instance.vyos_aggregator.public_ip}"
+output "web_status_url" {
+  description = "Web status URL for branch"
+  value       = "http://${aws_instance.vyos_branch.public_ip}"
 }
 
-output "cost_estimate" {
-  description = "Estimated monthly cost (USD)"
-  value       = "FREE for 12 months (t2.micro + 30GB in free tier)"
+output "tunnel_status" {
+  description = "Commands to check tunnel"
+  value       = "ssh -i ${var.key_name}.pem ec2-user@${aws_instance.vyos_branch.public_ip} 'sudo strongswan status'"
 }
 
-output "security_group_id" {
-  description = "Security group ID for VyOS"
-  value       = aws_security_group.vyos_sg.id
+output "test_connectivity" {
+  description = "Test connectivity between sites"
+  value       = "./validation/test-connectivity.sh ${var.aggregator_public_ip} ${aws_instance.vyos_branch.public_ip} ${var.key_name}.pem"
 }

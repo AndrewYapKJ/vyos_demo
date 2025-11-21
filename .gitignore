@@ -1,0 +1,216 @@
+# VyOS SD-WAN Project - Git Ignore File
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+*.tmp
+*~
+.#*
+#*#
+
+# Terraform backup and state files
+terraform.tfstate
+terraform.tfstate.backup
+terraform.tfstate.*.backup
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfplan
+*.tfout
+
+# SSH Keys and Certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Configuration backups
+*.conf.bak
+*.conf.backup
+*.conf.old
+ipsec.conf.backup*
+ipsec.secrets.backup*
+strongswan.conf.backup*
+
+# Log files
+*.log
+*.logs
+logs/
+var/log/
+/var/log/
+user-data.log
+strongswan.log
+vpn.log
+debug.log
+
+# Temporary files
+temp/
+tmp/
+.tmp/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.local
+.env.production
+.env.staging
+secrets.txt
+passwords.txt
+*.secret
+
+# AWS and Cloud provider files
+.aws/
+aws-credentials
+*.credentials
+config
+
+# Documentation build files
+docs/_build/
+docs/build/
+*.pdf
+*.docx
+*.html
+site/
+*.md
+# IDE and editor files
+.vscode/
+.idea/
+*.sublime-*
+.vim/
+.emacs.d/
+.atom/
+
+# Python cache and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Network configuration backups
+interfaces.backup
+routes.backup
+firewall.backup
+iptables.backup
+ip6tables.backup
+
+# Monitoring and statistics files
+*.stats
+*.metrics
+bandwidth.data
+qos.data
+traffic.data
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.rar
+*.7z
+
+# Generated reports and outputs
+reports/
+output/
+exports/
+sdwan_report_*.txt
+health_check_*.txt
+performance_*.txt
+
+# Test files and coverage
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Vagrant
+.vagrant/
+*.box
+
+# Docker
+.dockerignore
+Dockerfile.backup
+
+# Git backup files
+*.orig
+*.rej
+
+# Misc development files
+TODO.txt
+NOTES.txt
+scratch.txt
+test_*
+debug_*
+
+# Local configuration overrides
+local.conf
+local.config
+override.conf
+custom.conf
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.obj
+
+# Package files
+*.deb
+*.rpm
+*.pkg
+*.dmg
+*.msi
