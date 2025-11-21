@@ -1,0 +1,6 @@
+# Terraform Configuration
+aws_region = "ap-southeast-1"
+instance_type = "t3.small"
+key_name = "vyos-key"
+branch_public_ip = "203.0.113.50"  # Update with actual branch public IP
+environment = "test"
